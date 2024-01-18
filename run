@@ -1,0 +1,10 @@
+#!/bin/bash
+if [[ $# -ne 1 ]]; then
+    echo "Incorrect arguments: usage './run [FOLDERNAME]'"
+    exit
+fi
+
+g++ $1/main.cpp -O2 -std=c++17
+if [[ $? == 0 ]]; then
+    time ./a.out
+fi
