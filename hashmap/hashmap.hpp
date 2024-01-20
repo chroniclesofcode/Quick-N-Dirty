@@ -14,12 +14,13 @@ public:
 
     }
 
-
-
+    U& operator[](const T& elem) {
+        
+    }
 
 private:
     std::size_t size = 1024;
-    std::vector<T> buckets;
+    std::vector<U> buckets;
 };
 
 
