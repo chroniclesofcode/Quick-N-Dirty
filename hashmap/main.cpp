@@ -65,8 +65,9 @@ void test3() {
 }
 
 int main(void) {
-    //test1();
-    //test2();
+    test1();
+    test2();
     test3();
+    std::cout << "Tests passed!\n";
     return 0;
 }
