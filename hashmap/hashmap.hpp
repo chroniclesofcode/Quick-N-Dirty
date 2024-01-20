@@ -16,7 +16,7 @@ public:
         buckets.resize(size_b);
     }
 
-    hashmap(std::size_t size) : size_b{size} {
+    hashmap(std::size_t size) : size_b{size*4} {
         buckets.resize(size_b);
     }
 
@@ -25,8 +25,8 @@ public:
     }
 
     void resize() {
-        std::cout << "Resize!\n";
         size_b *= 2;
+        count = 0;
         Buckets tmp(size_b, std::nullopt);
         swap(buckets, tmp);
         for (auto e : tmp) {
@@ -34,6 +34,20 @@ public:
                 (*this)[e.value().first] = e.value().second;
             }
         }
+    }
+
+    std::size_t erase(const Key& elem) {
+        std::size_t idx = hash(elem);
+        while (buckets[idx].has_value() && buckets[idx].value().first != elem) {
+            ++idx;
+            if (unlikely(idx == size_b)) idx = 0;
+        }
+        if (buckets[idx].has_value()) {
+            buckets[idx].reset();
+            --count;
+            return 1;
+        }
+        return 0;
     }
 
     T& operator[](const Key& elem) {
