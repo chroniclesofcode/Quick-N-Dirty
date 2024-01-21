@@ -103,7 +103,9 @@ int main(void) {
     timer.reset("hashmap/stats/std.txt");
     for (int i = 0; i < 100; i++) {
         timer.start();
-        std::unordered_map<int, int> mp(LIM);
+        std::unordered_map<int, int> mp;
+        mp.max_load_factor(0.25);
+        mp.reserve(LIM);
         long long sum = 0;
         for (auto e : v) {
             mp[e] = 17;
