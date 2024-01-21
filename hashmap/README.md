@@ -9,3 +9,15 @@
 # Implementation
 - Optionals for bucket array : `std::vector<std::optional<std::pair<Key, T>>>`
 - __builtin_expect for modulo when probing
+
+# Benchmark
+
+Can see in stats folder.
+Generated 1e6 random numbers from 1 to 1e9 and added them into the hashmap.
+Then, extracted them from the hashmap and added them to a sum.
+Timed 100 times. 
+
+Average qnd::hashmap - 45ms.
+Average std::unordered_map - 239ms.
+
+More details like variance included in the stats folder.

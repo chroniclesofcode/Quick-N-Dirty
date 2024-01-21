@@ -1,6 +1,10 @@
 #include <iostream>
 #include <cassert>
+#include <random>
+#include <vector>
+#include <unordered_map>
 #include "hashmap.hpp"
+#include "../timer/timer.hpp"
 
 void test1() {
     qnd::hashmap<int, int> mp;
@@ -69,5 +73,46 @@ int main(void) {
     test2();
     test3();
     std::cout << "Tests passed!\n";
+
+    // Benchmarks
+
+    // Generate random numbers
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist(1, (int)1e9);
+    std::vector<int> v;
+    for (int i = 0; i < int(1e6); i++) {
+        v.push_back(dist(rng));
+    }
+    // Timing
+    int LIM = (int)1e6;
+    qnd::timer timer("hashmap/stats/qnd.txt");
+    for (int i = 0; i < 100; i++) {
+        timer.start();
+        qnd::hashmap<int, int> mp(LIM);
+        long long sum = 0;
+        for (auto e : v) {
+            mp[e] = 17;
+        }
+        for (auto e : v) {
+            sum += mp[e];
+        }
+        timer.stop();
+    }
+    timer.printStats();
+    timer.reset("hashmap/stats/std.txt");
+    for (int i = 0; i < 100; i++) {
+        timer.start();
+        std::unordered_map<int, int> mp(LIM);
+        long long sum = 0;
+        for (auto e : v) {
+            mp[e] = 17;
+        }
+        for (auto e : v) {
+            sum += mp[e];
+        }
+        timer.stop();
+    }
+    timer.printStats();
     return 0;
 }
