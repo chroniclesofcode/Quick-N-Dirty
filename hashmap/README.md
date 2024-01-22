@@ -5,6 +5,7 @@
 - Default size 1024
 - Key erase functionality
 - Custom Hash function allowed, default std::hash
+- TO:DO Make separate Robin-Hood hashmap and benchmark
 
 # Implementation
 - Optionals for bucket array : `std::vector<std::optional<std::pair<Key, T>>>`
