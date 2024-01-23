@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
 #include <optional>
+#include <cmath>
 
 #define likely(expr) __builtin_expect(expr, 1)
 #define unlikely(expr) __builtin_expect(expr, 0)
@@ -50,23 +51,41 @@ public:
         return 0;
     }
 
-    T& operator[](const Key& elem) {
+    T& operator[](Key&& elem) {
         if (unlikely(count >= size_b / 4)) {
             resize();
         }
         std::size_t idx = hash(elem);
-        while (buckets[idx].has_value() && buckets[idx].value().first != elem) {
+        std::size_t pd = 0; // current probe distance
+        std::size_t ret = -1;
+        while (1) {
+            if (!buckets[idx].has_value()) {
+                buckets[idx] = std::pair<Key, T>(elem, T{});
+                ++count;
+                return buckets[idx].value().second;
+            } else if (buckets[idx].value().first == elem) {
+                return buckets[idx].value().second;
+            }
+            // Swap element and curr value if probe_dist > pd
+            std::size_t tmp_hash = hash(buckets[idx].value().first);
+            std::size_t tmp_dist = probe_dist(idx, tmp_hash);
+            if (pd > tmp_dist) {
+                swap()
+            }
+
+            ++pd;
             ++idx;
             if (unlikely(idx == size_b)) idx = 0;
         }
-        if (!buckets[idx].has_value()) {
-            buckets[idx] = std::pair<Key, T>(elem, T{});
-            ++count;
-        } 
-        return buckets[idx].value().second;
+        return ret;
     }
 
 private:
+    inline std::size_t probe_dist(std::size_t idx, std::size_t curr) {
+        std::size_t diff = std::abs(curr - idx);
+        return std::min(diff, size_b - diff);
+    }
+
     std::size_t size_b = 1024;
     std::size_t count = 0;
     Buckets buckets;
