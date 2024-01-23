@@ -11,35 +11,43 @@ namespace qnd {
 template <typename Key, typename T, typename Hash = std::hash<Key>>
 class rh_hashmap {
 public:
-    using Buckets = std::vector<std::optional<std::pair<Key, T>>>;
+    struct Elem {
+        Elem(Key&& k, T&& v, std::size_t hsh) : key{std::move(k)}, v{std::move(v)}, hash{hsh} {}
+        Key key;
+        T val;
+        std::size_t hash;
+    }
+
+    using Buckets = std::vector<std::optional<Elem>>;
     
     rh_hashmap() {
         buckets.resize(size_b);
     }
 
-    rh_hashmap(std::size_t size) : size_b{size*4} {
+    rh_hashmap(std::size_t size) : size_b{(size)*load_factor + 1} {
         buckets.resize(size_b);
     }
 
-    inline std::size_t hash(const Key& elem) {
-        return Hash{}(elem) % size_b;
+    inline std::size_t calc_hash(const Key& key) {
+        return (Hash{}(key) % (size_b-1)) + 1;
     }
 
     void resize() {
-        size_b *= 2;
+        size_b *= load_factor;
         count = 0;
         Buckets tmp(size_b, std::nullopt);
         swap(buckets, tmp);
         for (auto e : tmp) {
             if (e.has_value()) {
-                (*this)[e.value().first] = e.value().second;
+                (*this)[e.value().key] = e.value().val;
             }
         }
     }
 
-    std::size_t erase(const Key& elem) {
-        std::size_t idx = hash(elem);
-        while (buckets[idx].has_value() && buckets[idx].value().first != elem) {
+    std::size_t erase(const Key& key) {
+        /*
+        std::size_t idx = hash(key);
+        while (buckets[idx].has_value() && buckets[idx].value().first != key) {
             ++idx;
             if (unlikely(idx == size_b)) idx = 0;
         }
@@ -49,33 +57,33 @@ public:
             return 1;
         }
         return 0;
+        */
     }
 
-    T& operator[](Key&& elem) {
-        if (unlikely(count >= size_b / 4)) {
+    T& operator[](Key&& key) {
+        if (unlikely(count >= size_b / load_factor)) {
             resize();
         }
-        std::size_t idx = hash(elem);
+        std::size_t chash = calc_hash(key);
+        std::size_t idx = chash;
         std::size_t pd = 0; // current probe distance
-        std::size_t ret = -1;
+        T tmp_val = T{};
         while (1) {
             if (!buckets[idx].has_value()) {
-                buckets[idx] = std::pair<Key, T>(elem, T{});
+                buckets[idx] = Elem(key, T{}, chash);
                 ++count;
-                return buckets[idx].value().second;
-            } else if (buckets[idx].value().first == elem) {
-                return buckets[idx].value().second;
+                return buckets[idx].value().val;
+            } else if (buckets[idx].value().key == key) {
+                return buckets[idx].value().val;
             }
-            // Swap element and curr value if probe_dist > pd
-            std::size_t tmp_hash = hash(buckets[idx].value().first);
-            std::size_t tmp_dist = probe_dist(idx, tmp_hash);
+            std::size_t tmp_dist = probe_dist(idx, buckets[idx].value().hash);
             if (pd > tmp_dist) {
                 swap()
             }
 
             ++pd;
             ++idx;
-            if (unlikely(idx == size_b)) idx = 0;
+            if (unlikely(idx == size_b)) idx = 1;
         }
         return ret;
     }
@@ -83,11 +91,12 @@ public:
 private:
     inline std::size_t probe_dist(std::size_t idx, std::size_t curr) {
         std::size_t diff = std::abs(curr - idx);
-        return std::min(diff, size_b - diff);
+        return std::min(diff, size_b-1 - diff);
     }
 
     std::size_t size_b = 1024;
     std::size_t count = 0;
+    std::size_t load_factor = 2;
     Buckets buckets;
 };
 
