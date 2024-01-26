@@ -70,6 +70,7 @@ public:
 
             ++idx;
             ++pd;
+            if (unlikely(idx == size_b)) idx = 0;
         }
         return 0;
     }
@@ -109,7 +110,7 @@ public:
 
             ++pd;
             ++idx;
-            if (unlikely(idx == size_b)) idx = 1;
+            if (unlikely(idx == size_b)) idx = 0;
         }
         return buckets[ret].value().val;
     }
