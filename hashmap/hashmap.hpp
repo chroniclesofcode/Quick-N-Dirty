@@ -16,7 +16,7 @@ public:
         buckets.resize(size_b);
     }
 
-    hashmap(std::size_t size) : size_b{size*4} {
+    hashmap(std::size_t size) : size_b{size*2} {
         buckets.resize(size_b);
     }
 
@@ -51,7 +51,7 @@ public:
     }
 
     T& operator[](const Key& elem) {
-        if (unlikely(count >= size_b / 4)) {
+        if (unlikely(count >= size_b / 2)) {
             resize();
         }
         std::size_t idx = hash(elem);

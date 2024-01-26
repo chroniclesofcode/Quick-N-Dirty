@@ -4,12 +4,13 @@
 #include <vector>
 #include <unordered_map>
 #include "hashmap.hpp"
+#include "rh_hashmap.hpp"
 #include "../timer/timer.hpp"
 
-#define BENCHMARK 0
+#define BENCHMARK 1
 
 void test1() {
-    qnd::hashmap<int, int> mp;
+    qnd::rh_hashmap<int, int> mp;
     // testing modification
     mp[35] = 200;
     assert(50 + mp[35] == 250);
@@ -28,7 +29,7 @@ void test1() {
 
 void test2() {
     // testing the resize feature, to see if it resizes properly
-    qnd::hashmap<int, int> mp(10);
+    qnd::rh_hashmap<int, int> mp(10);
     int ct = 100;
     for (int i = 0; i < 100; i++) {
         //std::cout << i << ": inserting " << i*2 << " -> " << ct << '\n';
@@ -77,7 +78,7 @@ void test4() {
             return key % 5;
         }
     };
-    qnd::hashmap<int, int, CustomH> mp;
+    qnd::rh_hashmap<int, int, CustomH> mp;
     // 5->6, 10->11, 15->16, 20->21, 25->26.
     mp[6] = 10;
     mp[11] = 9;
@@ -117,12 +118,11 @@ int main(void) {
     for (int i = 0; i < 100; i++) {
         timer.start();
         qnd::hashmap<int, int> mp(LIM);
-        long long sum = 0;
         for (auto e : v) {
-            mp[e] = 17;
+            mp[e] = e;
         }
         for (auto e : v) {
-            sum += mp[e];
+            assert(mp[e] == e);
         }
         timer.stop();
     }
@@ -131,14 +131,27 @@ int main(void) {
     for (int i = 0; i < 100; i++) {
         timer.start();
         std::unordered_map<int, int> mp;
-        mp.max_load_factor(0.25);
+        mp.max_load_factor(0.5);
         mp.reserve(LIM);
-        long long sum = 0;
         for (auto e : v) {
-            mp[e] = 17;
+            mp[e] = e;
         }
         for (auto e : v) {
-            sum += mp[e];
+            assert(mp[e] == e);
+        }
+        timer.stop();
+    }
+    timer.printStats();
+
+    timer.reset("hashmap/stats/robinhood.txt");
+    for (int i = 0; i < 100; i++) {
+        timer.start();
+        qnd::rh_hashmap<int, int> mp(LIM);
+        for (auto e : v) {
+            mp[e] = e;
+        }
+        for (auto e : v) {
+            assert(mp[e] == e);
         }
         timer.stop();
     }
