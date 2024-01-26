@@ -30,3 +30,9 @@ Average qnd::hashmap - 41ms.
 Average std::unordered_map - 155ms.
 
 More details like variance included in the stats folder.
+
+# Weaknesses
+
+Since the struct I use for each key + value pair is fairly large (there is a boolean in there, and a 32 bit hash) - if your key is fairly large then you
+won't be able to get many probes in before needing to fetch the next cache 
+line. So performance may deteriorate in certain scenarios if your key is large enough - but for the integer types there shouldn't be a problem.
