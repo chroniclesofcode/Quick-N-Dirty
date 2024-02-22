@@ -1,0 +1,8 @@
+
+namespace qnd {
+
+class arbitrage {
+
+};
+
+}
