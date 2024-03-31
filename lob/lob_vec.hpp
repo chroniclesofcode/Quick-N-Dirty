@@ -113,6 +113,10 @@ public:
         OrderPtr o = m_order[id];
         m_vol[o->price] -= o->quantity;
         o->quantity = 0;
+        if (m_vol[o->price] == 0) {
+            if (o->side == 0) m_bids.erase(o->price);
+            else m_asks.erase(o->price);
+        }
         m_order.erase(id);
     }
 

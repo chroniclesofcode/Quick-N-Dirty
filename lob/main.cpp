@@ -1,5 +1,5 @@
 #include <iostream>
-#include "lob_vec.hpp"
+#include "lob.hpp"
 #include <cassert>
 
 LOB book;
