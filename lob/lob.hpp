@@ -14,6 +14,11 @@
 
     Extension:
         unordered_map of price to list iterator -> fast insertion at price point
+    
+    Notes: 
+    cancelorder should get rid of price level
+    make sure to break on quantity == 0, and remove price level BEFORE that
+    when cancelling, do not invalidate references to object!!!
 */
 
 #pragma once
@@ -23,10 +28,11 @@
 #include <unordered_map>
 #include <functional>
 #include <iterator>
+#include <iostream>
 
 class LOB {
 private:
-    using OrderID = int32_t;
+    using OrderID = uint64_t;
     using Price = int32_t;
     using Quantity = uint64_t;
     struct Order {
@@ -36,8 +42,28 @@ private:
     };
     using OrderList = std::list<Order>;
 public:
+
     LOB() {
 
+    }
+
+    void printBook() {
+        std::cout << "buys: \n";
+        for (auto &e : m_bids) {
+            std::cout << "price: " << e.first << ": ";
+            for (auto &l : e.second) {
+                std::cout << l.quantity << ' ';
+            }
+            std::cout << '\n';
+        }
+        std::cout << "\nsells: \n";
+        for (auto &e : m_asks) {
+            std::cout << "price: " << e.first << ": ";
+            for (auto &l : e.second) {
+                std::cout << l.quantity << ' ';
+            }
+            std::cout << '\n';
+        }
     }
 
     void addOrder(OrderID id, int32_t price, uint64_t quantity, int side) {
@@ -46,7 +72,6 @@ public:
             // Check if matches with a sell order
             while (m_asks.size()) {
                 OrderList &orders = m_asks.begin()->second;
-                Order &top = *orders.begin();
                 if (!(price >= m_asks.begin()->first)) 
                     break;
                 while (!orders.empty()) {
@@ -60,6 +85,8 @@ public:
                 }
                 if (orders.empty())
                     m_asks.erase(m_asks.begin());
+                if (quantity == 0)
+                    break;
             }
             // If there is order remaining, add to m_bids
             if (quantity == 0) 
@@ -71,7 +98,6 @@ public:
             // Check if matches with a sell order
             while (m_bids.size()) {
                 OrderList &orders = m_bids.begin()->second;
-                Order &top = *orders.begin();
                 if (!(price <= m_bids.begin()->first)) 
                     break;
                 while (!orders.empty()) {
@@ -85,12 +111,14 @@ public:
                 }
                 if (orders.empty())
                     m_bids.erase(m_bids.begin());
+                if (quantity == 0)
+                    break;
             }
             // If there is order remaining, add to m_bids
             if (quantity == 0) 
                 return;
             m_asks[price].push_back({ price, quantity, side });
-            m_order[id] = std::prev(m_bids[price].end());
+            m_order[id] = std::prev(m_asks[price].end());
             m_vol[price] += quantity;
         }
     }
@@ -98,11 +126,18 @@ public:
     void cancelOrder(OrderID id) {
         auto it = m_order[id];
         Order &o = *it;
+        Price tmp_price = o.price;
         m_vol[o.price] -= o.quantity;
         if (o.side == 0) {
-            m_bids[o.price].erase(it);
+            auto &orders = m_bids[o.price];
+            orders.erase(it);
+            if (orders.empty())
+                m_bids.erase(tmp_price);
         } else {
-            m_asks[o.price].erase(it);
+            auto &orders = m_asks[o.price];
+            orders.erase(it);
+            if (orders.empty())
+                m_asks.erase(tmp_price);
         }
         m_order.erase(id);
     }

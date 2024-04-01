@@ -4,7 +4,7 @@ if [[ $# -ne 1 ]]; then
     exit
 fi
 
-g++ $1/main.cpp -O2 -std=c++17
+g++ $1/main.cpp -Wall -Werror -O2 -std=c++17
 if [[ $? == 0 ]]; then
     time ./a.out
 fi
