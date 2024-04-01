@@ -84,6 +84,9 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "filesystem": "cpp",
+        "map": "cpp",
+        "list": "cpp"
     }
 }
