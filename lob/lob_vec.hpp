@@ -42,7 +42,7 @@ private:
         Quantity quantity;
         int side;
     };
-    using OrderPtr = std::shared_ptr<Order>;
+    using OrderPtr = std::unique_ptr<Order>;
     using OrderList = std::vector<OrderPtr>;
 public:
 
@@ -78,8 +78,8 @@ public:
             // If quantity remaining, add to book
             if (quantity == 0) return;
             auto &orders = m_bids[price];
-            orders.push_back(std::make_shared<Order>( price, quantity, side ));
-            m_order[id] = orders.back();
+            orders.push_back(std::make_unique<Order>( price, quantity, side ));
+            m_order[id] = orders.back().get();
             m_vol[price] += quantity;
         } else {
             while (m_bids.size()) {
@@ -103,14 +103,14 @@ public:
             // If quantity remaining, add to book
             if (quantity == 0) return;
             auto &orders = m_asks[price];
-            orders.push_back(std::make_shared<Order>( price, quantity, side ));
-            m_order[id] = orders.back();
+            orders.push_back(std::make_unique<Order>( price, quantity, side ));
+            m_order[id] = orders.back().get();
             m_vol[price] += quantity;
         }
     }
 
     void cancelOrder(OrderID id) {
-        OrderPtr o = m_order[id];
+        Order* o = m_order[id];
         m_vol[o->price] -= o->quantity;
         o->quantity = 0;
         if (m_vol[o->price] == 0) {
@@ -126,6 +126,6 @@ public:
 private:
     std::map<Price, OrderList, std::greater<Price>> m_bids;
     std::map<Price, OrderList, std::less<Price>> m_asks;
-    std::unordered_map<OrderID, OrderPtr> m_order;
+    std::unordered_map<OrderID, Order*> m_order;
     std::unordered_map<Price, Quantity> m_vol;
 };
