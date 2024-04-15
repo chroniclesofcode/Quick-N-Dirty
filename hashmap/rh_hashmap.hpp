@@ -46,7 +46,7 @@ public:
         Buckets tmp(size_b, std::nullopt);
         std::swap(buckets, tmp);
         for (auto& opt : tmp) {
-            if (opt.has_value()) {
+            if (opt.has_value() && !opt.value().is_del) {
                 (*this)[std::move(opt.value().key)] = std::move(opt.value().val);
             }
         }
@@ -64,7 +64,7 @@ public:
                 break;
             } else if (buckets[idx].value().hash == chash && buckets[idx].value().key == key) {
                 buckets[idx].value().is_del = true;
-                --count;
+                // --count;
                 return 1;
             }
 
