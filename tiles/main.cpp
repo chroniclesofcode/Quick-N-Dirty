@@ -43,11 +43,14 @@ public:
     }
 
     void start() {
+        int SLEEP_MS;
         draw_board();
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_MS));
         while (!game_end) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(400));
+
             drop();
             draw_board();
+            std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_MS));
         }
     }
 private:
