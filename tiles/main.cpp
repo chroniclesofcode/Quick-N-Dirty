@@ -15,8 +15,6 @@
     [2][3]
 */
 
-
-
 class Tiles {
 
     enum Color {
@@ -49,9 +47,13 @@ public:
         draw_board();
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_MS));
         while (!game_end) {
+            fixed_block = false;
             get_input();
             drop();
             draw_board();
+            if (fixed_block) {
+                check_lines();
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_MS));
         }
     }
@@ -77,6 +79,34 @@ private:
         select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
         // return 0 if STDIN is not ready to be read.
         return FD_ISSET(STDIN_FILENO, &fds);
+    }
+
+    void check_lines() {
+        std::vector<std::vector<Color>> tmp(n, std::vector<Color>(m, Color::EMPTY));
+
+        bool change = false;
+
+        int bot = n-1;
+
+        for (int i = n-1; i >= 0; i--) {
+            int taken = true;
+            for (int j = 0; j < m; j++) {
+                if (board[i][j] == Color::EMPTY) {
+                    taken = false;
+                    break;
+                }
+            }
+            if (!taken) {
+                tmp[bot--] = board[i];
+            } else {
+                change = true;
+            }
+        }
+
+        if (change) {
+            swap(board, tmp);
+            draw_board();
+        }
     }
 
     bool validate_move(int x, int y, const std::vector<bool> &orient) {
@@ -123,6 +153,36 @@ private:
         validate_move(bx, by+1, currb.grid);
     }
 
+    void instant_place() {
+        bool left_exist = currb.grid[0] || currb.grid[2];
+        bool right_exist = currb.grid[1] || currb.grid[3];
+        int lowest_left = bx + (currb.grid[2] == true);
+        int lowest_right = bx + (currb.grid[3] == true);
+        int lh = n-1, rh = n-1;
+        if (left_exist) {
+            for (int i = lowest_left+1; i < n; i++) {
+                if (board[i][by] != Color::EMPTY) {
+                    lh = i-1;
+                    break;
+                }
+            }
+        }
+        if (right_exist) {
+            for (int i = lowest_right+1; i < n; i++) {
+                if (board[i][by+1] != Color::EMPTY) {
+                    rh = i-1;
+                    break;
+                }
+            }
+        }
+        int height = std::min(lh, rh);
+        if (!currb.grid[2] && !currb.grid[3]) {
+            bx = height;
+        } else if (height > 0) {
+            bx = height - 1;
+        }
+    }
+
     void get_input() {
         if (kbhit()) {
             std::string s;
@@ -136,7 +196,7 @@ private:
             } else if (s == "d") {
                 shift_right();
             } else if (s == "f") {
-                std::cout << "space bar" << std::endl;
+                instant_place();
             } else {
                 std::cout << "invalid command!" << std::endl;
             }
@@ -182,14 +242,18 @@ private:
         currb = generate_block();
         bx = 0;
         by = 0;
+        fixed_block = true;
     }
 
     void drop() {
+        int left_exist = currb.grid[0] || currb.grid[2];
+        int right_exist = currb.grid[1] || currb.grid[3];
         int lowest_left = bx + (currb.grid[2] == true);
         int lowest_right = bx + (currb.grid[3] == true);
-        if (lowest_left == n-1 || lowest_right == n-1) {
+        if ((left_exist && lowest_left == n-1) || (right_exist && lowest_right == n-1)) {
             draw_curr();
-        } else if (board[lowest_left+1][by] != Color::EMPTY || board[lowest_right+1][by+1] != Color::EMPTY) {
+        } else if ((left_exist && board[lowest_left+1][by] != Color::EMPTY) || 
+                    (right_exist && board[lowest_right+1][by+1] != Color::EMPTY)) {
             draw_curr();
         } else {
             bx++;
@@ -211,12 +275,13 @@ private:
     std::vector<std::vector<Color>> board;
     int bx, by;
     Block currb;
+    bool fixed_block;
 };
 
 std::vector<std::vector<bool>> Tiles::Block::variants = std::vector<std::vector<bool>>({ {1,1,0,0}, {1,1,0,1}, {1,1,1,1} });
 
 int main(void) {
-    Tiles t(10, 5);
+    Tiles t(15, 5);
     t.start();
     return 0;
 }
