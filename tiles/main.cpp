@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <chrono>
+#include <thread>
 
 /*
     extensions: quick drop, drop-faster as times goes on, abilities??? (think about)
@@ -41,13 +43,54 @@ public:
     }
 
     void start() {
-        std::cout << currb.type << ' ' << currb.col << '\n';
+        draw_board();
+        while (!game_end) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(400));
+            drop();
+            draw_board();
+        }
     }
 private:
 
+    void draw_board() {
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                if (Block::variants[currb.type][2*i+j]) {
+                    if (board[bx+i][by+j] != Color::EMPTY) {
+                        std::cout << '\n' << "YOU LOSE!" << std::endl;
+                        game_end = true;
+                        return;
+                    }
+                    board[bx+i][by+j] = Color::BLOCK;
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (board[i][j] == Color::BLOCK) {
+                    std::cout << static_cast<int>(currb.col) << ' ';
+                    board[i][j] = Color::EMPTY;
+                } else {
+                    std::cout << static_cast<int>(board[i][j]) << ' ';
+                }
+            }
+            std::cout << '\n';
+        }
+        std::cout << std::endl;
+    }
+
     // Fix the current block onto the board, and generate a new block
     void draw_curr() {
-        board[bx][by] = currb.col;
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                if (Block::variants[currb.type][2*i+j]) {
+                    board[bx+i][by+j] = currb.col;
+                }
+            }
+        }
+        currb = generate_block();
+        bx = 0;
+        by = 0;
     }
 
     void drop() {
@@ -55,7 +98,7 @@ private:
         int lowest_right = bx + (Block::variants[currb.type][3] == true);
         if (lowest_left == n-1 || lowest_right == n-1) {
             draw_curr();
-        } else if (board[bx][lowest_left+1] != Color::EMPTY || board[bx+1][lowest_right+1] != Color::EMPTY) {
+        } else if (board[lowest_left+1][by] != Color::EMPTY || board[lowest_right+1][by+1] != Color::EMPTY) {
             draw_curr();
         } else {
             bx++;
@@ -72,6 +115,7 @@ private:
     std::uniform_int_distribution<std::mt19937::result_type> dist;
     std::uniform_int_distribution<std::mt19937::result_type> dist_col;
 
+    bool game_end = false;
     int n, m;
     std::vector<std::vector<Color>> board;
     int bx, by;
@@ -81,7 +125,7 @@ private:
 std::vector<std::vector<bool>> Tiles::Block::variants = std::vector<std::vector<bool>>({ {1,1,0,0}, {1,1,0,1}, {1,1,1,1} });
 
 int main(void) {
-    Tiles t(20, 10);
+    Tiles t(10, 10);
     t.start();
     return 0;
 }
