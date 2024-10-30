@@ -6,14 +6,20 @@
 #include <unistd.h>
 
 /*
-    extensions: quick drop, drop-faster as times goes on, abilities??? (think about)
-    every tick, block drops down 1. If block hits something, do calculations for
-    row destruction
-
-    inside Block::variants
-    [0][1]
-    [2][3]
+    improvements to be made: 
+    - magic numbers, make it extensible so use variables not hardcode
+    - comments for non-trivial logic
+    - you typed it up too slow!
+    - careful about access controls
+    - vector is inefficient, consider a 1D vector
+    - all in one class is bad - use dependency injection
+        -> try to create classes like GameEngine, BlockFactory, Renderer, InputHandler
+        -> pass the factory, renderer into the gameengine.
+    - shifting rows down you should do this in-place not with a new DS.
+    - 
 */
+
+#define TSIZE 2
 
 class Tiles {
 
@@ -112,9 +118,9 @@ private:
     bool validate_move(int x, int y, const std::vector<bool> &orient) {
         if (!(x >= 0 && x < n && y >= 0 && y < m-1)) 
             return false;
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
-                if (orient[2*i+j] && board[x+i][y+j] != Color::EMPTY) {
+        for (int i = 0; i < TSIZE; i++) {
+            for (int j = 0; j < TSIZE; j++) {
+                if (orient[TSIZE*i+j] && board[x+i][y+j] != Color::EMPTY) {
                     return false;
                 }
             }
@@ -127,17 +133,17 @@ private:
 
     void rotate(bool is_left) {
         std::vector<bool> turn = currb.grid;
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < TSIZE; i++) {
             for (int j = 0; j < i; j++) {
-                swap(turn[i*2+j], turn[j*2+i]);
+                swap(turn[i*TSIZE+j], turn[j*TSIZE+i]);
             }
         }
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 1; j++) {
+        for (int i = 0; i < TSIZE; i++) {
+            for (int j = 0; j < TSIZE/2; j++) {
                 if (is_left) {
-                    swap(turn[j*2+i], turn[(2-j-1)*2+i]);
+                    swap(turn[j*TSIZE+i], turn[(TSIZE-j-1)*TSIZE+i]);
                 } else {
-                    swap(turn[i*2+j], turn[i*2+2-j-1]);
+                    swap(turn[i*TSIZE+j], turn[i*TSIZE+TSIZE-j-1]);
                 }
             }
         }
@@ -204,9 +210,9 @@ private:
     }
 
     void draw_board() {
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
-                if (currb.grid[2*i+j]) {
+        for (int i = 0; i < TSIZE; i++) {
+            for (int j = 0; j < TSIZE; j++) {
+                if (currb.grid[TSIZE*i+j]) {
                     if (board[bx+i][by+j] != Color::EMPTY) {
                         std::cout << '\n' << "YOU LOSE!" << std::endl;
                         game_end = true;
@@ -232,9 +238,9 @@ private:
 
     // Fix the current block onto the board, and generate a new block
     void draw_curr() {
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
-                if (currb.grid[2*i+j]) {
+        for (int i = 0; i < TSIZE; i++) {
+            for (int j = 0; j < TSIZE; j++) {
+                if (currb.grid[TSIZE*i+j]) {
                     board[bx+i][by+j] = currb.col;
                 }
             }
