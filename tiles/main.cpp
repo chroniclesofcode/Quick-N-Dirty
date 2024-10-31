@@ -16,7 +16,7 @@
         -> try to create classes like GameEngine, BlockFactory, Renderer, InputHandler
         -> pass the factory, renderer into the gameengine.
     - shifting rows down you should do this in-place not with a new DS.
-    - 
+    - row count can be O(1) if we keep track of it
 */
 
 #define TSIZE 2
