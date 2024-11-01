@@ -95,6 +95,7 @@ public:
         }
         return std::nullopt;
     }
+
     std::optional<Value> get(Key k) {
         auto it = cache.find(k);
         if (it == cache.end()) {
@@ -113,7 +114,7 @@ public:
 
 private:
     int sz;
-    std::unique_ptr<IStrategy> strat;
+    std::unique_ptr<IStrategy> strat; // Can't use IStrategy since it's abstract class, must be ptr
     std::unordered_map<Key, Value> cache;
 };
 
